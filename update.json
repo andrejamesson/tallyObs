@@ -1,7 +1,7 @@
 {
-  "versionCode": 6,
-  "versionName": "1.0.5",
-  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/app-release.apk",
-  "sha256": "671574542ef463f7db4883bbd70d789a38f5541bcb8775b6e398f470367fb53f",
-  "notes": "Ajuste de titulo na tela Setup."
+  "versionCode": 7,
+  "versionName": "1.0.6",
+  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.0.6.apk",
+  "sha256": "6635fe9a9c1b4d722dacc7e6f52d50b9bf003efe77b661540ba565af319cfd6d",
+  "notes": "Fix no Atualizar agora no Android e APK nomeado com versao."
 }

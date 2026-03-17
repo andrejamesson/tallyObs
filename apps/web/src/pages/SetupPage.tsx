@@ -49,16 +49,33 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
 
 async function openExternalUrl(url: string) {
   if (Capacitor.isNativePlatform()) {
+    let lastError: unknown = null
     try {
       const mod = await import('@capacitor/browser')
       await mod.Browser.open({ url })
       return
-    } catch {
-      // fallback below
+    } catch (err) {
+      lastError = err
     }
+    try {
+      const mod = await import('@capacitor/app-launcher')
+      await mod.AppLauncher.openUrl({ url })
+      return
+    } catch (err) {
+      lastError = err
+    }
+    try {
+      window.location.assign(url)
+      return
+    } catch (err) {
+      lastError = err
+    }
+    throw new Error(lastError instanceof Error ? lastError.message : 'native_open_failed')
   }
   const opened = window.open(url, '_blank', 'noopener,noreferrer')
-  if (!opened) window.location.assign(url)
+  if (!opened) {
+    window.location.assign(url)
+  }
 }
 
 export default function SetupPage() {
@@ -416,7 +433,11 @@ export default function SetupPage() {
                 onClick={() => {
                   const url = updateInfo.latest?.apkUrl
                   if (!url) return
-                  void openExternalUrl(url)
+                  setUpdateError(null)
+                  void openExternalUrl(url).catch((err) => {
+                    const msg = err instanceof Error ? err.message : 'open_failed'
+                    setUpdateError(`Falha ao abrir link da atualização: ${msg}`)
+                  })
                 }}
                 style={{
                   height: 38,
@@ -435,7 +456,7 @@ export default function SetupPage() {
             <div style={{ fontSize: 13, color: 'rgba(210,210,210,0.9)' }}>App já está na versão mais recente.</div>
           ) : null}
           {!updateChecking && updateError ? (
-            <div style={{ fontSize: 12, color: 'rgba(255,130,130,0.95)' }}>Falha ao verificar update: {updateError}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,130,130,0.95)' }}>{updateError}</div>
           ) : null}
           <button
             type="button"
