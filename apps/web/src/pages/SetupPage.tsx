@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import { useNavigate } from 'react-router-dom'
 import { checkForAppUpdate, type AppUpdateCheckResult } from '../services/appUpdate'
 import { buildApiUrl, normalizeServerBaseUrl } from '../services/socketClient'
@@ -44,6 +45,20 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
         reject(err)
       })
   })
+}
+
+async function openExternalUrl(url: string) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const mod = await import('@capacitor/browser')
+      await mod.Browser.open({ url })
+      return
+    } catch {
+      // fallback below
+    }
+  }
+  const opened = window.open(url, '_blank', 'noopener,noreferrer')
+  if (!opened) window.location.assign(url)
 }
 
 export default function SetupPage() {
@@ -401,8 +416,7 @@ export default function SetupPage() {
                 onClick={() => {
                   const url = updateInfo.latest?.apkUrl
                   if (!url) return
-                  const opened = window.open(url, '_blank', 'noopener,noreferrer')
-                  if (!opened) window.location.href = url
+                  void openExternalUrl(url)
                 }}
                 style={{
                   height: 38,

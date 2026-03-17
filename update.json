@@ -1,7 +1,7 @@
 {
-  "versionCode": 4,
-  "versionName": "1.0.3",
+  "versionCode": 5,
+  "versionName": "1.0.4",
   "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/app-release.apk",
-  "sha256": "df780254ab7a47665955dbb686e6fc6b3a7edcff17e69cf0083af30e9c6f84a7",
-  "notes": "Ajuste visual no Setup e build 1.0.3."
+  "sha256": "9fe32e1d5066bb8df9551f526c3b4cdcbde22f02fc3d5058431b37d44ff78a52",
+  "notes": "Fix no botao Atualizar agora para abrir URL no Android nativo."
 }
