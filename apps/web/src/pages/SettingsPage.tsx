@@ -73,26 +73,27 @@ export default function SettingsPage() {
   return (
     <div
       style={{
-        height: '100%',
+        height: '100dvh',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: 16,
+        padding: '12px 16px 24px',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: 560,
+          margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
         }}
       >
-        <div style={{ fontSize: 20, fontWeight: 700 }}>Configurações do Diretor</div>
-        <div style={{ fontSize: 13, opacity: 0.8 }}>
-          Selecione cenas extras e personalize a cor. Elas aparecem abaixo dos botões nativos no modo diretor.
-        </div>
+        <div style={{ fontSize: 15, fontWeight: 700 }}>Configurações do Diretor</div>
+       
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button

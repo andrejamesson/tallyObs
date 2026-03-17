@@ -228,11 +228,13 @@ export default function SetupPage() {
   return (
     <div
       style={{
-        height: '100%',
+        height: '100dvh',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: 16,
+        padding: '12px 16px 24px',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <form
@@ -300,6 +302,7 @@ export default function SetupPage() {
         style={{
           width: '100%',
           maxWidth: 420,
+          margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
