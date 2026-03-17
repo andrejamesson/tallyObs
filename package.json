@@ -1,0 +1,17 @@
+{
+  "name": "tally",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run stop && concurrently -k -n server,web -c cyan,magenta \"npm -w apps/server run dev\" \"npm -w apps/web run dev -- --host 0.0.0.0 --port 5173\"",
+    "stop": "node scripts/stop.mjs",
+    "build": "npm -w apps/server run build && npm -w apps/web run build",
+    "lint": "npm -w apps/web run lint",
+    "typecheck": "npm -w apps/server run typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

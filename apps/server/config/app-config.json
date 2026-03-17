@@ -1,0 +1,13 @@
+{
+  "obs": {
+    "host": "127.0.0.1",
+    "port": 4455,
+    "password": "123456"
+    
+  },
+  "vu": { "inputs": ["Mic/Aux"] },
+ "preview": { "url": "http://192.168.3.208:8080/program" },
+  "server": {
+    "port": 3001
+  }
+}

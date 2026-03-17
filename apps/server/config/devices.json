@@ -1,0 +1,69 @@
+{
+  "devices": [
+    {
+      "deviceId": "andre",
+      "targetType": "scene",
+      "targetName": "Camera 3 Aovivo"
+    },
+    {
+      "deviceId": "André",
+      "targetType": "scene",
+      "targetName": "Camera 1"
+    },
+    {
+      "deviceId": "andre4",
+      "targetType": "scene",
+      "targetName": "Camera 1"
+    },
+    {
+      "deviceId": "ca01",
+      "targetType": "scene",
+      "targetName": "Camera 1 Sony"
+    },
+    {
+      "deviceId": "cam01",
+      "targetType": "scene",
+      "targetName": "Camera 2"
+    },
+    {
+      "deviceId": "cam02",
+      "targetType": "source",
+      "targetName": "CAM2"
+    },
+    {
+      "deviceId": "cam03",
+      "targetType": "source",
+      "targetName": "CAM3"
+    },
+    {
+      "deviceId": "edhy",
+      "targetType": "scene",
+      "targetName": "Camera 3 Aovivo"
+    },
+    {
+      "deviceId": "igor",
+      "targetType": "scene",
+      "targetName": "Camera 3"
+    },
+    {
+      "deviceId": "iphone",
+      "targetType": "scene",
+      "targetName": "Camera 3"
+    },
+    {
+      "deviceId": "Jamesson",
+      "targetType": "scene",
+      "targetName": "Camera 1"
+    },
+    {
+      "deviceId": "opa",
+      "targetType": "scene",
+      "targetName": "Camera 3"
+    },
+    {
+      "deviceId": "ppo",
+      "targetType": "scene",
+      "targetName": "Camera 2"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Tally Light",
+  "short_name": "Tally",
+  "description": "Tally mobile para OBS",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
+
