@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { checkForAppUpdate, type AppUpdateCheckResult } from '../services/appUpdate'
 import { buildApiUrl, normalizeServerBaseUrl } from '../services/socketClient'
 
 const DEFAULT_SERVER_URL = 'http://192.168.3.208:3001'
@@ -71,6 +72,9 @@ export default function SetupPage() {
   const [healthText, setHealthText] = useState('Aguardando teste de conexão...')
   const [networkError, setNetworkError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [updateChecking, setUpdateChecking] = useState(false)
+  const [updateError, setUpdateError] = useState<string | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateCheckResult | null>(null)
 
   useEffect(() => {
     localStorage.setItem('tally.setup.deviceIdDraft', deviceId)
@@ -167,6 +171,24 @@ export default function SetupPage() {
       cancelled = true
     }
   }, [serverUrl, deviceId])
+
+  const runUpdateCheck = async () => {
+    setUpdateChecking(true)
+    setUpdateError(null)
+    try {
+      const result = await checkForAppUpdate()
+      setUpdateInfo(result)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'erro_update'
+      setUpdateError(msg)
+    } finally {
+      setUpdateChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    void runUpdateCheck()
+  }, [])
 
   const options = targets.scenes
   const canUseSelect = connectedToObs && options.length > 0
@@ -355,6 +377,72 @@ export default function SetupPage() {
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: '16px' }}>
           {healthText}
           {networkError ? ` • erro: ${networkError}` : ''}
+        </div>
+        <div
+          style={{
+            borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(255,255,255,0.05)',
+            padding: '10px 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 12, opacity: 0.82 }}>
+            Atualização: {updateInfo?.current.versionName ?? '...'} (build {updateInfo?.current.versionCode ?? '-'})
+          </div>
+          {updateChecking ? <div style={{ fontSize: 13 }}>Verificando atualização...</div> : null}
+          {!updateChecking && updateInfo?.hasUpdate && updateInfo.latest ? (
+            <>
+              <div style={{ fontSize: 13, color: 'rgba(140,255,165,0.95)' }}>
+                Nova versão disponível: {updateInfo.latest.versionName} (build {updateInfo.latest.versionCode})
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = updateInfo.latest?.apkUrl
+                  if (!url) return
+                  const opened = window.open(url, '_blank', 'noopener,noreferrer')
+                  if (!opened) window.location.href = url
+                }}
+                style={{
+                  height: 38,
+                  borderRadius: 9,
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: 'rgba(0,150,70,0.38)',
+                  color: '#fff',
+                  fontSize: 14,
+                }}
+              >
+                Atualizar agora
+              </button>
+            </>
+          ) : null}
+          {!updateChecking && updateInfo && !updateInfo.hasUpdate ? (
+            <div style={{ fontSize: 13, color: 'rgba(210,210,210,0.9)' }}>App já está na versão mais recente.</div>
+          ) : null}
+          {!updateChecking && updateError ? (
+            <div style={{ fontSize: 12, color: 'rgba(255,130,130,0.95)' }}>Falha ao verificar update: {updateError}</div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              void runUpdateCheck()
+            }}
+            disabled={updateChecking}
+            style={{
+              height: 32,
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.18)',
+              background: 'rgba(255,255,255,0.10)',
+              color: '#fff',
+              fontSize: 12,
+              opacity: updateChecking ? 0.65 : 1,
+            }}
+          >
+            Verificar novamente
+          </button>
         </div>
         <button
           type="submit"
