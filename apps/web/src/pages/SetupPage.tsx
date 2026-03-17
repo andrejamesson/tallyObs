@@ -288,7 +288,7 @@ export default function SetupPage() {
           gap: 12,
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: 0.2 }}>Tally Light by: Atec Consultoria</div>
+        <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: 0.2 }}>Tally Light</div>
       
         <input
           value={serverUrl}
