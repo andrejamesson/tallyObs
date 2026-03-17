@@ -1,7 +1,7 @@
 {
-  "versionCode": 7,
-  "versionName": "1.0.6",
-  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.0.6.apk",
-  "sha256": "6635fe9a9c1b4d722dacc7e6f52d50b9bf003efe77b661540ba565af319cfd6d",
-  "notes": "Fix no Atualizar agora no Android e APK nomeado com versao."
+  "versionCode": 8,
+  "versionName": "1.0.7",
+  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.0.7.apk",
+  "sha256": "9eeceaae7581cecf41543fa08b6b0e29a7373bdb048a96bdfd06bca1d3d53925",
+  "notes": "Melhoria de scroll em paisagem nas telas Setup e Configuracoes do Diretor."
 }
