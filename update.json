@@ -1,7 +1,7 @@
 {
-  "versionCode": 3,
-  "versionName": "1.0.2",
+  "versionCode": 4,
+  "versionName": "1.0.3",
   "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/app-release.apk",
-  "sha256": "7bfade8c495a90a572bfebbaabe028a263dc6311b77b0c27d7970e2e3ba03c7f",
-  "notes": "Update check via GitHub, melhorias no fluxo e build 1.0.2."
+  "sha256": "df780254ab7a47665955dbb686e6fc6b3a7edcff17e69cf0083af30e9c6f84a7",
+  "notes": "Ajuste visual no Setup e build 1.0.3."
 }

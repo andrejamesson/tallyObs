@@ -274,9 +274,7 @@ export default function SetupPage() {
         }}
       >
         <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: 0.2 }}>Tally Light by: Atec Consultoria</div>
-        <div style={{ opacity: 0.78, fontSize: 14, lineHeight: '18px' }}>
-          Digite seu Nome e selecione a cena do OBS.
-        </div>
+      
         <input
           value={serverUrl}
           onChange={(e) => setServerUrl(e.target.value)}
