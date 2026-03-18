@@ -1,7 +1,7 @@
 {
-  "versionCode": 11,
-  "versionName": "1.1.0",
-  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.0.apk",
-  "sha256": "a517e153275a95dda797566095963c586deac3b6f006a842cd79fc84448e1586",
-  "notes": "Release estavel com Modo Camera completo (publisher/viewer), troca de camera mais resiliente, VU de microfone com visual OBS, selecao de microfones (interno/USB/Bluetooth), controles hide/show, watermark no modo camera, melhorias de reconexao e ajustes de UX no Tally/Diretor."
+  "versionCode": 12,
+  "versionName": "1.1.1",
+  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.1.apk",
+  "sha256": "7fc051241bf897ea5a6ae03dea67ffccdaa944cda445ad6d600b387028a1e87d",
+  "notes": "Splash de release notes integrada: ao atualizar, o app busca automaticamente as notas da release no GitHub e mostra uma tela inicial com novidades da versao instalada."
 }
