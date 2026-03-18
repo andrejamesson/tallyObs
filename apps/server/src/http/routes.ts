@@ -181,6 +181,13 @@ export async function registerRoutes(
       await delay(sleepMs)
     }
   })
+
+  fastify.get('/api/camera/viewer', async (req, reply) => {
+    const query = (req.query ?? {}) as Record<string, string | undefined>
+    const roomRaw = typeof query.room === 'string' ? query.room.trim() : ''
+    const room = roomRaw || 'studio'
+    return reply.type('text/html; charset=utf-8').send(buildCameraViewerHtml(room))
+  })
 }
 
 async function isReachable(url: string) {
@@ -241,4 +248,133 @@ function buildPreviewHtml() {
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms))
+}
+
+function buildCameraViewerHtml(room: string) {
+  const safeRoom = JSON.stringify(room)
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Camera Viewer</title>
+    <style>
+      html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+      #remote { width: 100vw; height: 100vh; object-fit: cover; background: #000; display: block; }
+    </style>
+  </head>
+  <body>
+    <video id="remote" autoplay playsinline></video>
+    <script>
+      const room = ${safeRoom}
+      const remote = document.getElementById('remote')
+      let ws = null
+      let pc = null
+      let reconnectTimer = null
+      let closedByApp = false
+
+      function clearReconnect() {
+        if (!reconnectTimer) return
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+      }
+
+      function scheduleReconnect() {
+        if (closedByApp || reconnectTimer) return
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null
+          connectViewer()
+        }, 1400)
+      }
+
+      function closeTransport() {
+        try { if (ws && ws.readyState <= 1) ws.close() } catch {}
+        try { if (pc) pc.close() } catch {}
+        ws = null
+        pc = null
+      }
+
+      async function connectViewer() {
+        clearReconnect()
+        closeTransport()
+
+        const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+        ws = new WebSocket(wsProto + '//' + location.host + '/ws')
+        pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
+
+        pc.ontrack = (evt) => {
+          const stream = evt.streams && evt.streams[0] ? evt.streams[0] : null
+          if (stream) remote.srcObject = stream
+          else {
+            let fallback = remote.srcObject
+            if (!(fallback instanceof MediaStream)) {
+              fallback = new MediaStream()
+              remote.srcObject = fallback
+            }
+            fallback.addTrack(evt.track)
+          }
+          remote.muted = false
+          remote.volume = 1
+          remote.play().catch(() => {})
+        }
+
+        pc.onicecandidate = (evt) => {
+          if (evt.candidate && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ice', candidate: evt.candidate }))
+          }
+        }
+
+        pc.onconnectionstatechange = () => {
+          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') {
+            scheduleReconnect()
+          }
+        }
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ type: 'join', role: 'viewer', room }))
+        }
+
+        ws.onmessage = async (evt) => {
+          let msg
+          try {
+            msg = JSON.parse(evt.data)
+          } catch {
+            return
+          }
+
+          if (msg.type === 'offer') {
+            try {
+              await pc.setRemoteDescription(msg.sdp)
+              const answer = await pc.createAnswer()
+              await pc.setLocalDescription(answer)
+              ws.send(JSON.stringify({ type: 'answer', sdp: answer }))
+            } catch {
+              scheduleReconnect()
+            }
+          }
+
+          if (msg.type === 'ice' && msg.candidate) {
+            try { await pc.addIceCandidate(msg.candidate) } catch {}
+          }
+
+          if (msg.type === 'system' && msg.message === 'publisher-left') {
+            remote.srcObject = null
+            scheduleReconnect()
+          }
+        }
+
+        ws.onerror = () => scheduleReconnect()
+        ws.onclose = () => scheduleReconnect()
+      }
+
+      window.addEventListener('beforeunload', () => {
+        closedByApp = true
+        clearReconnect()
+        closeTransport()
+      })
+
+      connectViewer()
+    </script>
+  </body>
+</html>`
 }

@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import ConnectionBadge from '../components/ConnectionBadge'
+import CameraPublisherPanel from '../components/CameraPublisherPanel'
 import ObsVuMeter from '../components/ObsVuMeter'
 import PreviewPlayer from '../components/PreviewPlayer'
 import TallyFrame from '../components/TallyFrame'
@@ -92,8 +93,9 @@ export default function TallyPage() {
     startWidth: 250,
   })
   const offlineNotifiedRef = useRef(false)
-  const [displayMode, setDisplayMode] = useState<'full' | 'simple' | 'director'>(() => {
+  const [displayMode, setDisplayMode] = useState<'full' | 'simple' | 'director' | 'camera'>(() => {
     const raw = localStorage.getItem('tally.mode')
+    if (raw === 'camera') return 'camera'
     if (raw === 'director') return 'director'
     return raw === 'simple' ? 'simple' : 'full'
   })
@@ -114,8 +116,11 @@ export default function TallyPage() {
   useEffect(() => {
     if (displayMode === 'director') return
     let cancelled = false
+    let inFlight = false
 
     const tick = async () => {
+      if (inFlight) return
+      inFlight = true
       try {
         const res = await fetch(buildApiUrl(`/api/obs/state?t=${Date.now()}`), { cache: 'no-store' })
         if (!res.ok) throw new Error('bad_response')
@@ -126,11 +131,13 @@ export default function TallyPage() {
       } catch {
         if (cancelled) return
         setProgramSceneName('')
+      } finally {
+        inFlight = false
       }
     }
 
     void tick()
-    const intervalId = window.setInterval(tick, 650)
+    const intervalId = window.setInterval(tick, 1200)
     return () => {
       cancelled = true
       window.clearInterval(intervalId)
@@ -814,6 +821,55 @@ export default function TallyPage() {
     )
   }
 
+  if (displayMode === 'camera') {
+    return (
+      <TallyFrame onAir={state.onAir} disconnected={disconnected} showBorder={false}>
+        <CameraPublisherPanel />
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            display: 'flex',
+            gap: 8,
+            zIndex: 20,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setDisplayMode('full')}
+            style={{
+              height: 30,
+              padding: '0 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.18)',
+              background: 'rgba(18,18,18,0.72)',
+              color: '#fff',
+              fontSize: 12,
+            }}
+          >
+            TALLY
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/', { replace: true })}
+            style={{
+              height: 30,
+              padding: '0 12px',
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.18)',
+              background: 'rgba(18,18,18,0.72)',
+              color: '#fff',
+              fontSize: 12,
+            }}
+          >
+            SETUP
+          </button>
+        </div>
+      </TallyFrame>
+    )
+  }
+
   return (
     <TallyFrame onAir={state.onAir} disconnected={disconnected}>
       <PreviewPlayer previewUrl={state.previewUrl} />
@@ -971,6 +1027,22 @@ export default function TallyPage() {
           }}
         >
           MODO DIRETOR
+        </button>
+        <button
+          type="button"
+          onClick={() => setDisplayMode('camera')}
+          style={{
+            height: 24,
+            padding: '0 10px',
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.18)',
+            background: 'rgba(18,18,18,0.72)',
+            color: '#fff',
+            fontSize: 11,
+            letterSpacing: 0.2,
+          }}
+        >
+          MODO CÂMERA
         </button>
       </div>
       {state.lastDisconnect ? (

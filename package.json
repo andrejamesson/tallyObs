@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "dev": "npm run stop && concurrently -k -n server,web -c cyan,magenta \"npm -w apps/server run dev\" \"npm -w apps/web run dev -- --host 0.0.0.0 --port 5173\"",
+    "dev:all": "npm run stop && concurrently -k -n server,camera,web -c cyan,yellow,magenta \"npm -w apps/server run dev\" \"npm -w camera-server run dev\" \"npm -w apps/web run dev -- --host 0.0.0.0 --port 5173\"",
     "stop": "node scripts/stop.mjs",
     "build": "npm -w apps/server run build && npm -w apps/web run build",
     "lint": "npm -w apps/web run lint",

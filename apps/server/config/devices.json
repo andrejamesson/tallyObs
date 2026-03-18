@@ -11,6 +11,11 @@
       "targetName": "Camera 1"
     },
     {
+      "deviceId": "andre jamesson",
+      "targetType": "scene",
+      "targetName": "Camera 4 Celular"
+    },
+    {
       "deviceId": "andre4",
       "targetType": "scene",
       "targetName": "Camera 1"
@@ -54,6 +59,11 @@
       "deviceId": "Jamesson",
       "targetType": "scene",
       "targetName": "Camera 1"
+    },
+    {
+      "deviceId": "kk",
+      "targetType": "scene",
+      "targetName": "Camera 4 Celular"
     },
     {
       "deviceId": "opa",

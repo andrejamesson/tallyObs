@@ -1,0 +1,13 @@
+{
+  "name": "camera-server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

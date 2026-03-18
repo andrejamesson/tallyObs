@@ -42,20 +42,20 @@ export function buildApiUrl(path: string) {
   return `${base}${normalizedPath}`
 }
 
-function buildWsUrl() {
+export function buildWsUrl(path = '/ws') {
   const base = getConfiguredServerBaseUrl()
   if (base) {
     try {
       const url = new URL(base)
       const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
-      return `${protocol}//${url.host}/ws`
+      return `${protocol}//${url.host}${path.startsWith('/') ? path : `/${path}`}`
     } catch {
       //
     }
   }
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${protocol}//${window.location.host}/ws`
+  return `${protocol}//${window.location.host}${path.startsWith('/') ? path : `/${path}`}`
 }
 
 function safeJsonParse(input: string) {
@@ -104,7 +104,7 @@ export class SocketClient {
 
     let ws: WebSocket
     try {
-      ws = new WebSocket(buildWsUrl())
+      ws = new WebSocket(buildWsUrl('/ws'))
     } catch {
       this.connected = false
       this.opts.onConnectionChanged(false)

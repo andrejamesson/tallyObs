@@ -83,8 +83,11 @@ export function useTallyState(deviceId: string) {
     if (!deviceId) return
 
     let cancelled = false
+    let inFlight = false
 
     const tick = async () => {
+      if (inFlight) return
+      inFlight = true
       try {
         const [stateRes, deviceRes] = await Promise.all([
           fetch(buildApiUrl(`/api/obs/state?t=${Date.now()}`), { cache: 'no-store' }),
@@ -122,11 +125,13 @@ export function useTallyState(deviceId: string) {
           ...prev,
           connectedToServer: false,
         }))
+      } finally {
+        inFlight = false
       }
     }
 
     void tick()
-    const intervalMs = appIsActive ? 800 : 2500
+    const intervalMs = appIsActive ? 1200 : 3000
     const id = window.setInterval(tick, intervalMs)
     return () => {
       cancelled = true
