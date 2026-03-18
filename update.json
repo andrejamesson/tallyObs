@@ -1,7 +1,7 @@
 {
-  "versionCode": 13,
-  "versionName": "1.1.2",
-  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.2.apk",
-  "sha256": "0443f3f3c5ea463942d32ef977d1010c6e27df888fff7ec1d8ab29930f9397a0",
-  "notes": "Correcao visual: removida a marca d'agua global da direita para evitar duplicidade. Mantida a marca no layout especifico do modo camera."
+  "versionCode": 15,
+  "versionName": "1.1.4",
+  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.4.apk",
+  "notes": "Correcao visual: removida a marca d'agua global da direita para evitar duplicidade. Mantida a marca no layout especifico do modo camera.",
+  "sha256": "b5784575fdaa8da87f41eea3928383eff7c0661d06849fae914b5d7048265dfa"
 }

@@ -7,12 +7,18 @@
   "scripts": {
     "dev": "npm run stop && concurrently -k -n server,web -c cyan,magenta \"npm -w apps/server run dev\" \"npm -w apps/web run dev -- --host 0.0.0.0 --port 5173\"",
     "dev:all": "npm run stop && concurrently -k -n server,camera,web -c cyan,yellow,magenta \"npm -w apps/server run dev\" \"npm -w camera-server run dev\" \"npm -w apps/web run dev -- --host 0.0.0.0 --port 5173\"",
+    "desktop:dev": "npm -w desktop run dev",
+    "desktop:pack:mac": "npm -w desktop run pack:mac",
+    "desktop:pack:mac:m1": "npm -w desktop run pack:mac:m1",
+    "desktop:pack:win": "npm -w desktop run pack:win",
     "stop": "node scripts/stop.mjs",
+    "sync:update-manifest": "node scripts/sync-update-manifest.mjs",
     "build": "npm -w apps/server run build && npm -w apps/web run build",
     "lint": "npm -w apps/web run lint",
     "typecheck": "npm -w apps/server run typecheck"
   },
   "devDependencies": {
+    "7zip-bin": "^5.2.0",
     "concurrently": "^9.2.1"
   }
 }
