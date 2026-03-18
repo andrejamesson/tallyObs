@@ -1,7 +1,7 @@
 {
-  "versionCode": 12,
-  "versionName": "1.1.1",
-  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.1.apk",
-  "sha256": "7fc051241bf897ea5a6ae03dea67ffccdaa944cda445ad6d600b387028a1e87d",
-  "notes": "Splash de release notes integrada: ao atualizar, o app busca automaticamente as notas da release no GitHub e mostra uma tela inicial com novidades da versao instalada."
+  "versionCode": 13,
+  "versionName": "1.1.2",
+  "apkUrl": "https://github.com/andrejamesson/tallyObs/releases/latest/download/tallyObs-v1.1.2.apk",
+  "sha256": "0443f3f3c5ea463942d32ef977d1010c6e27df888fff7ec1d8ab29930f9397a0",
+  "notes": "Correcao visual: removida a marca d'agua global da direita para evitar duplicidade. Mantida a marca no layout especifico do modo camera."
 }
