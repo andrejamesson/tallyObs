@@ -30,8 +30,16 @@ export type GithubReleaseNotes = {
 }
 
 function compareVersionNames(a: string, b: string) {
-  const pa = a.split('.').map((part) => Number.parseInt(part, 10) || 0)
-  const pb = b.split('.').map((part) => Number.parseInt(part, 10) || 0)
+  const normalize = (value: string) =>
+    value
+      .trim()
+      .replace(/^v/i, '')
+      .replace(/[^0-9.]/g, '.')
+      .split('.')
+      .filter(Boolean)
+      .map((part) => Number.parseInt(part, 10) || 0)
+  const pa = normalize(a)
+  const pb = normalize(b)
   const len = Math.max(pa.length, pb.length)
   for (let i = 0; i < len; i += 1) {
     const av = pa[i] ?? 0

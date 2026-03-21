@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { useNavigate } from 'react-router-dom'
-import { checkForAppUpdate, type AppUpdateCheckResult } from '../services/appUpdate'
+import { checkForAppUpdate, getCurrentAppVersion, type AppVersionInfo } from '../services/appUpdate'
 import { buildApiUrl, normalizeServerBaseUrl } from '../services/socketClient'
 
 const DEFAULT_SERVER_URL = 'http://192.168.3.208:3001'
@@ -30,6 +30,12 @@ type TargetsResponse = {
 type HealthResponse = {
   ok?: boolean
   connectedToObs?: boolean
+}
+
+type UpdateModalState = {
+  latestVersionName: string
+  latestVersionCode: number
+  apkUrl: string
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
@@ -93,8 +99,13 @@ export default function SetupPage() {
     () => localStorage.getItem('tally.setup.targetNameDraft') ?? localStorage.getItem('tally.targetName') ?? '',
     [],
   )
+  const [backendType, setBackendType] = useState<'server' | 'vmix'>(
+    () => (localStorage.getItem('tally.backendType') as 'server' | 'vmix') ?? ('server' as const),
+  )
   const [deviceId, setDeviceId] = useState(initial)
   const [serverUrl, setServerUrl] = useState(initialServerUrl)
+  const [vmixUrl, setVmixUrl] = useState(() => localStorage.getItem('tally.vmixUrl') ?? 'http://192.168.1.2:8088')
+  const [vmixInputNumber, setVmixInputNumber] = useState(() => localStorage.getItem('tally.vmixInputNumber') ?? '1')
   const targetType: 'scene' = 'scene'
   const [targetName, setTargetName] = useState(initialTargetName)
   const [loadingTargets, setLoadingTargets] = useState(true)
@@ -106,7 +117,8 @@ export default function SetupPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [updateChecking, setUpdateChecking] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
-  const [updateInfo, setUpdateInfo] = useState<AppUpdateCheckResult | null>(null)
+  const [currentVersion, setCurrentVersion] = useState<AppVersionInfo>({ versionCode: 0, versionName: '0.0.0' })
+  const [updateModal, setUpdateModal] = useState<UpdateModalState | null>(null)
 
   useEffect(() => {
     localStorage.setItem('tally.setup.deviceIdDraft', deviceId)
@@ -204,23 +216,44 @@ export default function SetupPage() {
     }
   }, [serverUrl, deviceId])
 
+  useEffect(() => {
+    let cancelled = false
+    const loadVersion = async () => {
+      try {
+        const version = await getCurrentAppVersion()
+        if (!cancelled) setCurrentVersion(version)
+      } catch {
+        //
+      }
+    }
+    void loadVersion()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const runUpdateCheck = async () => {
     setUpdateChecking(true)
     setUpdateError(null)
     try {
       const result = await checkForAppUpdate()
-      setUpdateInfo(result)
+      setCurrentVersion(result.current)
+      if (result.hasUpdate && result.latest) {
+        setUpdateModal({
+          latestVersionName: result.latest.versionName,
+          latestVersionCode: result.latest.versionCode,
+          apkUrl: result.latest.apkUrl,
+        })
+      } else {
+        setUpdateModal(null)
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'erro_update'
-      setUpdateError(msg)
+      setUpdateError(`Falha ao verificar atualização: ${msg}`)
     } finally {
       setUpdateChecking(false)
     }
   }
-
-  useEffect(() => {
-    void runUpdateCheck()
-  }, [])
 
   const options = targets.scenes
   const canUseSelect = connectedToObs && options.length > 0
@@ -241,6 +274,24 @@ export default function SetupPage() {
         onSubmit={async (e) => {
           e.preventDefault()
           setSubmitError(null)
+          localStorage.setItem('tally.backendType', backendType)
+
+          if (backendType === 'vmix') {
+            if (!vmixUrl.trim()) {
+              setSubmitError('Informe o IP do vMix.')
+              return
+            }
+            if (!vmixInputNumber.trim()) {
+              setSubmitError('Informe o número do input.')
+              return
+            }
+            localStorage.setItem('tally.vmixUrl', vmixUrl.trim())
+            localStorage.setItem('tally.vmixInputNumber', vmixInputNumber.trim())
+            localStorage.setItem('tally.deviceId', `Input ${vmixInputNumber}`)
+            navigate(`/tally/vmix-${vmixInputNumber}`, { replace: true })
+            return
+          }
+
           const id = normalizeDeviceId(deviceId)
           if (!id) return
 
@@ -310,175 +361,183 @@ export default function SetupPage() {
       >
         <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: 0.2 }}>Tally Light</div>
       
-        <input
-          value={serverUrl}
-          onChange={(e) => setServerUrl(e.target.value)}
-          onBlur={() => {
-            const normalized = normalizeServerBaseUrl(serverUrl)
-            if (normalized) setServerUrl(normalized)
-          }}
-          placeholder="http://192.168.3.208:3001"
-          inputMode="url"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          style={{
-            height: 44,
-            borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.06)',
-            color: '#fff',
-            padding: '0 12px',
-            outline: 'none',
-            fontSize: 16,
-          }}
-        />
-        <input
-          value={deviceId}
-          onChange={(e) => setDeviceId(e.target.value)}
-          placeholder="Ex: João da Silva"
-          inputMode="text"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          style={{
-            height: 44,
-            borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.06)',
-            color: '#fff',
-            padding: '0 12px',
-            outline: 'none',
-            fontSize: 16,
-          }}
-        />
-        <select
-          value={targetName}
-          onChange={(e) => setTargetName(e.target.value)}
-          disabled={!canUseSelect}
-          style={{
-            height: 44,
-            borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.06)',
-            color: '#fff',
-            padding: '0 12px',
-            outline: 'none',
-            fontSize: 16,
-            opacity: canUseSelect ? 1 : 0.6,
-          }}
-        >
-          <option value="">
-            {loadingTargets
-              ? 'Carregando…'
-              : connectedToObs
-                ? options.length > 0
-                  ? 'Selecione a cena...'
-                  : 'Nenhuma cena encontrada'
-                : 'OBS desconectado'}
-          </option>
-          {options.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-        {!canUseSelect ? (
-          <input
-            value={manualTargetName}
-            onChange={(e) => setManualTargetName(e.target.value)}
-            placeholder="Nome da cena (ex: Camera 1)"
-            inputMode="text"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)', padding: 4, borderRadius: 12 }}>
+          <button
+            type="button"
+            onClick={() => setBackendType('server')}
             style={{
-              height: 44,
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.18)',
-              background: 'rgba(255,255,255,0.06)',
+              flex: 1,
+              height: 36,
+              borderRadius: 9,
+              border: 0,
+              background: backendType === 'server' ? 'rgba(255,255,255,0.12)' : 'transparent',
               color: '#fff',
-              padding: '0 12px',
-              outline: 'none',
-              fontSize: 16,
+              fontSize: 13,
+              fontWeight: backendType === 'server' ? 600 : 400,
             }}
-          />
-        ) : null}
+          >
+            MODO OBS (via Server)
+          </button>
+          <button
+            type="button"
+            onClick={() => setBackendType('vmix')}
+            style={{
+              flex: 1,
+              height: 36,
+              borderRadius: 9,
+              border: 0,
+              background: backendType === 'vmix' ? 'rgba(255,255,255,0.12)' : 'transparent',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: backendType === 'vmix' ? 600 : 400,
+            }}
+          >
+            MODO VMIX (Direto)
+          </button>
+        </div>
+
+        {backendType === 'vmix' ? (
+          <>
+            <input
+              value={vmixUrl}
+              onChange={(e) => setVmixUrl(e.target.value)}
+              placeholder="Ex: http://192.168.1.2:8088"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              style={{
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                padding: '0 12px',
+                outline: 'none',
+                fontSize: 16,
+              }}
+            />
+            <input
+              value={vmixInputNumber}
+              onChange={(e) => setVmixInputNumber(e.target.value)}
+              placeholder="Número do Input (Ex: 4)"
+              inputMode="numeric"
+              style={{
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                padding: '0 12px',
+                outline: 'none',
+                fontSize: 16,
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <input
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              onBlur={() => {
+                const normalized = normalizeServerBaseUrl(serverUrl)
+                if (normalized) setServerUrl(normalized)
+              }}
+              placeholder="http://192.168.3.208:3001"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              style={{
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                padding: '0 12px',
+                outline: 'none',
+                fontSize: 16,
+              }}
+            />
+            <input
+              value={deviceId}
+              onChange={(e) => setDeviceId(e.target.value)}
+              placeholder="Ex: João da Silva"
+              inputMode="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              style={{
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                padding: '0 12px',
+                outline: 'none',
+                fontSize: 16,
+              }}
+            />
+            <select
+              value={targetName}
+              onChange={(e) => setTargetName(e.target.value)}
+              disabled={!canUseSelect}
+              style={{
+                height: 44,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.06)',
+                color: '#fff',
+                padding: '0 12px',
+                outline: 'none',
+                fontSize: 16,
+                opacity: canUseSelect ? 1 : 0.6,
+              }}
+            >
+              <option value="">
+                {loadingTargets
+                  ? 'Carregando…'
+                  : connectedToObs
+                    ? options.length > 0
+                      ? 'Selecione a cena...'
+                      : 'Nenhuma cena encontrada'
+                    : 'OBS desconectado'}
+              </option>
+              {options.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            {!canUseSelect ? (
+              <input
+                value={manualTargetName}
+                onChange={(e) => setManualTargetName(e.target.value)}
+                placeholder="Nome da cena (ex: Camera 1)"
+                inputMode="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                style={{
+                  height: 44,
+                  borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#fff',
+                  padding: '0 12px',
+                  outline: 'none',
+                  fontSize: 16,
+                }}
+              />
+            ) : null}
+          </>
+        )}
         {submitError ? (
           <div style={{ fontSize: 13, color: 'rgba(255, 120, 120, 0.95)' }}>{submitError}</div>
         ) : null}
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: '16px' }}>
           {healthText}
           {networkError ? ` • erro: ${networkError}` : ''}
-        </div>
-        <div
-          style={{
-            borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.18)',
-            background: 'rgba(255,255,255,0.05)',
-            padding: '10px 12px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          <div style={{ fontSize: 12, opacity: 0.82 }}>
-            Atualização: {updateInfo?.current.versionName ?? '...'} (build {updateInfo?.current.versionCode ?? '-'})
-          </div>
-          {updateChecking ? <div style={{ fontSize: 13 }}>Verificando atualização...</div> : null}
-          {!updateChecking && updateInfo?.hasUpdate && updateInfo.latest ? (
-            <>
-              <div style={{ fontSize: 13, color: 'rgba(140,255,165,0.95)' }}>
-                Nova versão disponível: {updateInfo.latest.versionName} (build {updateInfo.latest.versionCode})
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = updateInfo.latest?.apkUrl
-                  if (!url) return
-                  setUpdateError(null)
-                  void openExternalUrl(url).catch((err) => {
-                    const msg = err instanceof Error ? err.message : 'open_failed'
-                    setUpdateError(`Falha ao abrir link da atualização: ${msg}`)
-                  })
-                }}
-                style={{
-                  height: 38,
-                  borderRadius: 9,
-                  border: '1px solid rgba(255,255,255,0.22)',
-                  background: 'rgba(0,150,70,0.38)',
-                  color: '#fff',
-                  fontSize: 14,
-                }}
-              >
-                Atualizar agora
-              </button>
-            </>
-          ) : null}
-          {!updateChecking && updateInfo && !updateInfo.hasUpdate ? (
-            <div style={{ fontSize: 13, color: 'rgba(210,210,210,0.9)' }}>App já está na versão mais recente.</div>
-          ) : null}
-          {!updateChecking && updateError ? (
-            <div style={{ fontSize: 12, color: 'rgba(255,130,130,0.95)' }}>{updateError}</div>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              void runUpdateCheck()
-            }}
-            disabled={updateChecking}
-            style={{
-              height: 32,
-              borderRadius: 8,
-              border: '1px solid rgba(255,255,255,0.18)',
-              background: 'rgba(255,255,255,0.10)',
-              color: '#fff',
-              fontSize: 12,
-              opacity: updateChecking ? 0.65 : 1,
-            }}
-          >
-            Verificar novamente
-          </button>
         </div>
         <button
           type="submit"
@@ -493,7 +552,104 @@ export default function SetupPage() {
         >
           Salvar e abrir
         </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, paddingBottom: 8 }}>
+          <button
+            type="button"
+            onClick={() => {
+              void runUpdateCheck()
+            }}
+            disabled={updateChecking}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'rgba(255,255,255,0.78)',
+              fontSize: 12,
+              textDecoration: 'underline',
+              cursor: updateChecking ? 'default' : 'pointer',
+              opacity: updateChecking ? 0.7 : 1,
+              padding: 0,
+            }}
+          >
+            v{currentVersion.versionName || '0.0.0'}
+          </button>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.62)' }}>Powered by Atec Consultoria</div>
+          {updateError ? <div style={{ fontSize: 11, color: 'rgba(255,130,130,0.95)' }}>{updateError}</div> : null}
+        </div>
       </form>
+      {updateModal ? (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 80,
+            background: 'rgba(0,0,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 18,
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 360,
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(14,18,22,0.98)',
+              padding: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 700 }}>Nova versão disponível</div>
+            <div style={{ fontSize: 13, opacity: 0.9 }}>
+              Atual: v{currentVersion.versionName} (build {currentVersion.versionCode || '-'})
+            </div>
+            <div style={{ fontSize: 13, color: 'rgba(140,255,165,0.95)' }}>
+              Nova: v{updateModal.latestVersionName} (build {updateModal.latestVersionCode})
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setUpdateError(null)
+                  void openExternalUrl(updateModal.apkUrl).catch((err) => {
+                    const msg = err instanceof Error ? err.message : 'open_failed'
+                    setUpdateError(`Falha ao abrir link da atualização: ${msg}`)
+                  })
+                }}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 9,
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: 'rgba(0,150,70,0.38)',
+                  color: '#fff',
+                  fontSize: 14,
+                }}
+              >
+                Baixar atualização
+              </button>
+              <button
+                type="button"
+                onClick={() => setUpdateModal(null)}
+                style={{
+                  flex: 1,
+                  height: 38,
+                  borderRadius: 9,
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: '#fff',
+                  fontSize: 14,
+                }}
+              >
+                Agora não
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
